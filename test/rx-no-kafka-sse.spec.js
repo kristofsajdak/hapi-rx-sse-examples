@@ -1,0 +1,84 @@
+'use strict'
+
+const _ = require('lodash');
+const Rx = require('rx');
+const uuid = require('node-uuid');
+const chai = require('chai');
+const expect = chai.expect;
+const Kafka = require('no-kafka');
+const url = require('url');
+const EventSource = require('eventsource')
+
+const baseUrl = 'http://localhost:9090'
+
+beforeEach(function () {
+    const kafkaHostUrl = process.env.DOCKER_HOST;
+    const kafkaHostName = kafkaHostUrl ? url.parse(kafkaHostUrl).hostname : '127.0.0.1';
+    this.options = { connectionString: `${kafkaHostName}:9092` };
+    this.noKafkaProducer = new Kafka.Producer(this.options);
+    return this.noKafkaProducer.init()
+        .then(()=> require('../'))
+        .then((server)=> {
+            this.server = server;
+            return server.start();
+        })
+})
+
+
+afterEach(function () {
+    return this.server.stop().then(()=> this.noKafkaProducer.end())
+})
+
+function insert(producer, topic, partition, event, id, title) {
+    return producer.send({
+        topic: topic,
+        partition: partition,
+        message: {
+            key: event,
+            value: JSON.stringify({
+                id,
+                type: 'books',
+                attributes: {
+                    title
+                }
+            })
+        }
+    });
+}
+
+describe('When an EventSource is created with that same SSE endpoint and query params : ?filter[event]=books.insert,records.insert ' +
+    'And 3 new event message are added to that same topic : 1 books.insert, 1 dvds.insert, 1 books.insert', function () {
+
+        beforeEach(function (done) {
+            this.source = new EventSource(baseUrl + '/events/streaming?filter[event]=books.insert,records.insert')
+            Rx.Observable.fromEvent(this.source, 'open')
+                .subscribe(() => {
+                    return insert(this.noKafkaProducer, 'all', 0, 'books.insert', uuid.v4(), 'test title1')
+                        .then(() => insert(this.noKafkaProducer, 'all', 0, 'dvds.insert', uuid.v4(), 'test title2'))
+                        .then(() => insert(this.noKafkaProducer, 'all', 0, 'books.insert', uuid.v4(), 'test title3'))
+                        .then(() => done()).catch(done)
+                })
+        })
+
+        it('Then the EventSource should only receive the books.insert messages', function (done) {
+
+            const subject = new Rx.Subject()
+
+            Rx.Observable.fromEvent(this.source, 'books.insert').subscribe(subject)
+            Rx.Observable.fromEvent(this.source, 'dvds.insert').subscribe(subject)
+            Rx.Observable.fromEvent(this.source, 'records.insert').subscribe(subject)
+
+            subject
+                .take(2)
+                .bufferWithCount(2)
+                .subscribe((events) => {
+                    events.map((event) => {
+                        expect(event.type).to.equal('books.insert')
+                    })
+                    this.source.close()
+                    subject.dispose()
+                    done()
+                })
+
+        })
+    })
