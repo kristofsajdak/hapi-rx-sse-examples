@@ -3,13 +3,14 @@ const hapiRxSSE = require('hapi-rx-sse');
 const rxNoKafka = require('rx-no-kafka');
 const Kafka = require('no-kafka');
 const url = require('url');
+const _ = require('lodash');
 
 const kafkaHostUrl = process.env.DOCKER_HOST;
 const kafkaHostName = kafkaHostUrl ? url.parse(kafkaHostUrl).hostname : '127.0.0.1';
 const options = { connectionString: `${kafkaHostName}:9092` };
 
 const server = new Hapi.Server();
-server.connection({ port: 9090 });
+server.connection({ port: 8088 });
 server.route({
     path: '/events/streaming',
     method: 'GET',
@@ -22,7 +23,7 @@ server.route({
                 partition: 0
             })
             .map(toSSE)
-            .filter(createQueryParamsFilter(req))
+            .filter(createQueryParamsFilter(req));
 
         hapiRxSSE.stream(observable, req, reply);
     }
@@ -41,8 +42,8 @@ function createQueryParamsFilter(req) {
         const filterEventQueryParam = req.query['filter[event]'];
         if (filterEventQueryParam) {
             const filterEvents = filterEventQueryParam.split(',');
-            const match = _.find(filterEvents, (filterEvent) => new RegExp(filterEvent).test(sseObject.event));
-            return !_.isEmpty(match)
+            const match = _.find(filterEvents, (filterEvent) => new RegExp(filterEvent).test(message.event.toString()));
+            return !_.isEmpty(match);
         }
         return true
     }

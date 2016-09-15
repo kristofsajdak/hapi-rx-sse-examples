@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const _ = require('lodash');
 const Rx = require('rx');
@@ -9,7 +9,7 @@ const Kafka = require('no-kafka');
 const url = require('url');
 const EventSource = require('eventsource')
 
-const baseUrl = 'http://localhost:9090'
+const baseUrl = 'http://localhost:8088'
 
 beforeEach(function () {
     const kafkaHostUrl = process.env.DOCKER_HOST;
@@ -22,12 +22,12 @@ beforeEach(function () {
             this.server = server;
             return server.start();
         })
-})
+});
 
 
 afterEach(function () {
     return this.server.stop().then(()=> this.noKafkaProducer.end())
-})
+});
 
 function insert(producer, topic, partition, event, id, title) {
     return producer.send({
@@ -46,11 +46,12 @@ function insert(producer, topic, partition, event, id, title) {
     });
 }
 
-describe('When an EventSource is created with that same SSE endpoint and query params : ?filter[event]=books.insert,records.insert ' +
-    'And 3 new event message are added to that same topic : 1 books.insert, 1 dvds.insert, 1 books.insert', function () {
+describe(`Given a SSE endpoint /events/streaming 
+    When an EventSource is created for /events/streaming?filter[event]=books.insert,records.insert
+    And 3 new event message are added to that same topic : 1 books.insert, 1 dvds.insert, 1 books.insert`, function () {
 
         beforeEach(function (done) {
-            this.source = new EventSource(baseUrl + '/events/streaming?filter[event]=books.insert,records.insert')
+            this.source = new EventSource(baseUrl + '/events/streaming?filter[event]=books.insert,records.insert');
             Rx.Observable.fromEvent(this.source, 'open')
                 .subscribe(() => {
                     return insert(this.noKafkaProducer, 'all', 0, 'books.insert', uuid.v4(), 'test title1')
@@ -58,15 +59,15 @@ describe('When an EventSource is created with that same SSE endpoint and query p
                         .then(() => insert(this.noKafkaProducer, 'all', 0, 'books.insert', uuid.v4(), 'test title3'))
                         .then(() => done()).catch(done)
                 })
-        })
+        });
 
         it('Then the EventSource should only receive the books.insert messages', function (done) {
 
-            const subject = new Rx.Subject()
+            const subject = new Rx.Subject();
 
-            Rx.Observable.fromEvent(this.source, 'books.insert').subscribe(subject)
-            Rx.Observable.fromEvent(this.source, 'dvds.insert').subscribe(subject)
-            Rx.Observable.fromEvent(this.source, 'records.insert').subscribe(subject)
+            Rx.Observable.fromEvent(this.source, 'books.insert').subscribe(subject);
+            Rx.Observable.fromEvent(this.source, 'dvds.insert').subscribe(subject);
+            Rx.Observable.fromEvent(this.source, 'records.insert').subscribe(subject);
 
             subject
                 .take(2)
@@ -74,11 +75,11 @@ describe('When an EventSource is created with that same SSE endpoint and query p
                 .subscribe((events) => {
                     events.map((event) => {
                         expect(event.type).to.equal('books.insert')
-                    })
-                    this.source.close()
-                    subject.dispose()
+                    });
+                    this.source.close();
+                    subject.dispose();
                     done()
                 })
 
         })
-    })
+    });
