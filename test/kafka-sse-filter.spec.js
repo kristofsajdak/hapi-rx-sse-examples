@@ -7,9 +7,9 @@ const chai = require('chai');
 const expect = chai.expect;
 const Kafka = require('no-kafka');
 const url = require('url');
-const EventSource = require('eventsource')
+const EventSource = require('eventsource');
 
-const baseUrl = 'http://localhost:8088'
+const baseUrl = 'http://localhost:8088';
 
 beforeEach(function () {
     const kafkaHostUrl = process.env.DOCKER_HOST;
@@ -17,7 +17,7 @@ beforeEach(function () {
     this.options = { connectionString: `${kafkaHostName}:9092` };
     this.noKafkaProducer = new Kafka.Producer(this.options);
     return this.noKafkaProducer.init()
-        .then(()=> require('../'))
+        .then(()=> require('../kafka-sse-filter/kafka-sse-filter'))
         .then((server)=> {
             this.server = server;
             return server.start();
