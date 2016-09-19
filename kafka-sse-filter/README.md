@@ -1,9 +1,9 @@
-# **kafka-sse-filter[*]()*
+# **kafka-sse-filter**
 
 This sample app demonstrates how you can combine a [Kafka Observable](https://github.com/kristofsajdak/rx-no-kafka) with 
 [hapi-rx-sse](https://github.com/kristofsajdak/hapi-rx-sse) to expose a Kafka topic/partition as Server-Sent Events.
 
-[Filtering](#filter) is supported via request query parameters in the form of `?filter[events]=`. 
+[Filtering](#filter) is supported via request query parameters in the form of `?filter[events]=` 
 
 *Coming soon*: EventSource and Last-event-id support
   
