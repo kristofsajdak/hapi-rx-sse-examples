@@ -1,15 +1,23 @@
 const uuid = require('node-uuid');
-const url = require('url');
-const Kafka = require('no-kafka');
+const kafkaSSEFilter = require('./kafka-sse-filter');
 
-function send(producer, topic, partition, id, type, title) {
+const args = process.argv;
+
+const producer = kafkaSSEFilter.createProducer();
+
+producer.init()
+    .then(()=> send(producer, args[2], args[3]))
+    .then(()=> producer.end())
+    .then(()=> process.exit());
+
+function send(producer, type, title) {
     return producer.send({
-        topic: topic,
-        partition: partition,
+        topic: 'all',
+        partition: 0,
         message: {
             key: `${type}.insert`,
             value: JSON.stringify({
-                id,
+                id: uuid.v4(),
                 type,
                 attributes: {
                     title
@@ -18,14 +26,3 @@ function send(producer, topic, partition, id, type, title) {
         }
     });
 }
-
-const args = process.argv;
-
-const kafkaHostUrl = process.env.DOCKER_HOST;
-const kafkaHostName = kafkaHostUrl ? url.parse(kafkaHostUrl).hostname : '127.0.0.1';
-const options = {connectionString: `${kafkaHostName}:9092`};
-const noKafkaProducer = new Kafka.Producer(options);
-noKafkaProducer.init()
-    .then(()=> send(noKafkaProducer, 'all', 0, uuid.v4(), args[2], args[3]))
-    .then(()=> noKafkaProducer.end())
-    .then(()=> process.exit());
