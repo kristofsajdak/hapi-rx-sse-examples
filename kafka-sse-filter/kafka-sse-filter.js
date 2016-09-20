@@ -22,7 +22,8 @@ function createServer() {
                 .createObservable({
                     consumer: new Kafka.SimpleConsumer(options),
                     topic: 'all',
-                    partition: 0
+                    partition: 0,
+                    offset: req.headers['last-event-id']
                 })
                 .map(toSSE)
                 .filter(createQueryParamsFilter(req));
@@ -57,14 +58,14 @@ function createProducer() {
     return new Kafka.Producer(options);
 }
 
-function send(producer, type, title) {
+function send(producer, id, type, title) {
     return producer.send({
         topic: 'all',
         partition: 0,
         message: {
             key: `${type}.insert`,
             value: JSON.stringify({
-                id: uuid.v4(),
+                id,
                 type,
                 attributes: {
                     title

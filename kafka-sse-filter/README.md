@@ -5,7 +5,7 @@ This sample app demonstrates how you can combine a [Kafka Observable](https://gi
 
 [Filtering](#filter) is supported via request query parameters in the form of `?filter[events]=` 
 
-*Coming soon*: EventSource and Last-event-id support
+*Coming soon*: HTML page with an EventSource rendering the messages streamed from Kafka over SSE
   
 ## start the Hapi server
   
