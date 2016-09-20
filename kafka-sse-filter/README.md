@@ -1,11 +1,7 @@
 # **kafka-sse-filter**
 
 This sample app demonstrates how you can combine a [Kafka Observable](https://github.com/kristofsajdak/rx-no-kafka) with 
-[hapi-rx-sse](https://github.com/kristofsajdak/hapi-rx-sse) to expose a Kafka topic/partition as Server-Sent Events.
-
-[Filtering](#filter) is supported via request query parameters in the form of `?filter[events]=` 
-
-*Coming soon*: HTML page with an EventSource rendering the messages streamed from Kafka over SSE
+[hapi-rx-sse](https://github.com/kristofsajdak/hapi-rx-sse) to expose a Kafka topic/partition as Server-Sent Events, and consume those event messages with an [html5 Eventsource](http://www.html5rocks.com/en/tutorials/eventsource/basics/)    
   
 ## start the Hapi server
   
@@ -16,7 +12,7 @@ node index.js
 ## Open Browser
 
 ```
-open http://localhost:8088/events/streaming
+open http://localhost:8088/
 ```
 
 ## Publish
@@ -24,23 +20,30 @@ open http://localhost:8088/events/streaming
 Publish some messages
 
 ```
-node publish.js dvds bleach   
-node publish.js dvds dirt
+node publish.js dvds omen   
 node publish.js books orphanx
 ```
+
+and watch the magic happen ( a more stylish UX coming soon :-)
 
 ## Filter
 
-Add the `filter[event]` query parameter to filter events
+The current filter on the SSE endpoint is set to include dvds.* and books.* events
 
 ```
-open http://localhost:8088/events/streaming?filter[event]=dvds.*
+var source = new EventSource('/events/streaming?filter[event]=books.*,dvds.*');
 ```
 
-When republishing the same messages, only dvds should show up in the stream
+When publishing same messages on let's say cds, no updates should flow through
 
 ```
-node publish.js dvds bleach   
-node publish.js dvds dirt
-node publish.js books orphanx
+node publish.js cds bleach   
+```
+
+Change the filter parameter to include other types of events 
+
+For example
+
+```
+var source = new EventSource('/events/streaming?filter[event]=books.*,cds.*');
 ```

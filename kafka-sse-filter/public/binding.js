@@ -14,7 +14,7 @@ $(function () {
         function (e) {
             console.log('Received data: ' + e.data);
             const parsed = JSON.parse(e.data);
-            titleDiv.html('<a>' + parsed.attributes.title + '</a>');
+            titleDiv.html('<a>' + parsed.type + ':&nbsp;' + parsed.attributes.title + '</a>');
         },
         function (err) {
             console.error(err);
