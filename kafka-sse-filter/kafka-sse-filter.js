@@ -5,14 +5,37 @@ const Kafka = require('no-kafka');
 const url = require('url');
 const _ = require('lodash');
 const uuid = require('node-uuid');
+const Inert = require('inert');
+const Path = require('path');
 
 const kafkaHostUrl = process.env.DOCKER_HOST;
 const kafkaHostName = kafkaHostUrl ? url.parse(kafkaHostUrl).hostname : '127.0.0.1';
 const options = {connectionString: `${kafkaHostName}:9092`};
 
 function createServer() {
-    const server = new Hapi.Server();
+    const server = new Hapi.Server({
+        connections: {
+            routes: {
+                files: {
+                    relativeTo: Path.join(__dirname, 'public')
+                }
+            }
+        }
+    });
+    server.register(Inert, () => {
+    });
     server.connection({port: 8088});
+    server.route({
+        method: 'GET',
+        path: '/{param*}',
+        handler: {
+            directory: {
+                path: '.',
+                redirectToSlash: true,
+                index: true
+            }
+        }
+    });
     server.route({
         path: '/events/streaming',
         method: 'GET',

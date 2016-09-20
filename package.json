@@ -1,6 +1,6 @@
 {
   "name": "hapi-rx-sse-examples",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "exiting": "^2.0.1",
     "hapi": "^15.0.3",
     "hapi-rx-sse": "^0.5.1",
+    "inert": "^4.0.2",
     "lodash": "^4.14.1",
     "rx-no-kafka": "^0.1.0"
   },
